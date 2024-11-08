@@ -1,65 +1,55 @@
 import gymnasium as gym
 import numpy as np
 from agents.q_learning_agent import QLearningAgent
-import matplotlib.pyplot as plt
-import time
+from enviroments.plot import Plotter
 import pickle
+import os
 
-# Initialize environment
-env = gym.make("CartPole-v1", render_mode="rgb_array")  # Change render_mode to "human" for visualization
-agent = QLearningAgent(state_size=env.observation_space.shape[0], action_size=env.action_space.n, num_bins=20)
+def train(episodes=5000, load_qtable=True, save_qtable=True):
+    # Initialize environment
+    env = gym.make("CartPole-v1", render_mode="rgb_array")
+    agent = QLearningAgent(state_size=env.observation_space.shape[0], 
+                          action_size=env.action_space.n, 
+                          num_bins=20)
+    
+    if load_qtable and os.path.exists('q_table.pkl'):
+        with open('q_table.pkl', 'rb') as f:
+            print("Loading Q-table from file")
+            agent.q_table = pickle.load(f)
+    
+    rewards = []
+    epsilon_values = []
+    
+    for episode in range(episodes):
+        state, _ = env.reset()
+        total_reward = 0
+        terminated = False
+        truncated = False
+        
+        while not (terminated or truncated):
+            action = agent.act(state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            agent.learn(state, action, reward, next_state, terminated, truncated)
+            state = next_state
+            total_reward += reward
+        
+        rewards.append(total_reward)
+        epsilon_values.append(agent.epsilon)
+        
+        if (episode + 1) % 100 == 0:
+            avg_reward = np.mean(rewards[-100:])
+            print(f"Episode {episode+1}: Average Reward (last 100) = {avg_reward:.2f}, Epsilon = {agent.epsilon:.4f}")
+    
+    # Save Q-table if requested
+    if save_qtable:
+        with open('q_table.pkl', 'wb') as f:
+            print("Saving Q-table to file")
+            pickle.dump(agent.q_table, f)
+    
+    env.close()
+    return rewards, epsilon_values
 
-rewards = []
-epsilon_values = []
-
-with open('q_table.pkl', 'rb') as f:
-    print("Loading Q-table from file")
-    agent.q_table = pickle.load(f)
-
-for episode in range(5000):  
-    state, _ = env.reset()
-    total_reward = 0
-    terminated = False
-    truncated = False
-
-    while not (terminated or truncated):
-        action = agent.act(state)
-        next_state, reward, terminated, truncated, _ = env.step(action)
-        agent.learn(state, action, reward, next_state, terminated, truncated)
-        state = next_state
-        total_reward += reward
-
-    rewards.append(total_reward)
-    epsilon_values.append(agent.epsilon)
-    print(f"Episode {episode+1}: Total Reward = {total_reward}, Epsilon = {agent.epsilon:.4f}")
-
-
-
-# Save Q-table
-with open('q_table.pkl', 'wb') as f:
-    print("Saving Q-table to file")
-    pickle.dump(agent.q_table, f)
-
-env.close()
-
-# Plotting
-window = 50
-def moving_average(data, window_size=50):
-    return np.convolve(data, np.ones(window_size) / window_size, mode='valid')
-
-smoothed_rewards = moving_average(rewards)
-plt.plot(smoothed_rewards)
-plt.xlabel("Episode")
-plt.ylabel("Smoothed Total Reward")
-plt.title("Smoothed Training Progress")
-plt.show()
-
-"""
-# Plotting Epsilon Decay
-plt.plot(epsilon_values, label='Epsilon Value')
-plt.xlabel("Episode")
-plt.ylabel("Epsilon")
-plt.title("Epsilon Decay Over Time")
-plt.legend()
-plt.show()
-"""
+if __name__ == "__main__":
+    rewards, epsilon_values = train()
+    plotter = Plotter()
+    plotter.plot_training_results(rewards, epsilon_values)
