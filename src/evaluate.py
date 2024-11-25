@@ -1,6 +1,7 @@
 import gymnasium as gym
 import numpy as np
 from agents.q_learning_agent import QLearningAgent
+from agents.dqn_agent import DQNAgent
 import pickle
 import time
 from enviroments.plot import Plotter

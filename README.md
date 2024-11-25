@@ -18,6 +18,17 @@ The current focus of this repository is on the CartPole-v1 environment provided 
 - **Persistence:** Saves and loads the Q-table using Python's `pickle` module to maintain learned policies across sessions.
 - **Visualization:** Employs Matplotlib to plot training progress and epsilon decay over episodes.
 
+### DQN on CartPole
+
+This project implements a DQN agent on the CartPole environment. The agent uses a deep neural network to approximate the Q-values and learns to make optimal decisions based on the environment's dynamics.
+
+**Key Components:**
+
+- **Environment Setup:** Utilizes Gymnasium to create and manage the CartPole environment.
+- **DQNAgent:** A custom agent that implements the DQN algorithm, including experience replay, target network updates, and epsilon-greedy action selection.
+- **Training Script (`train.py`):** Manages the training loop, agent interactions with the environment, and performance tracking.
+- **Persistence:** Saves and loads the model using TensorFlow's `SavedModel` format to maintain learned policies across sessions.
+- **Visualization:** Employs Matplotlib to plot training progress and epsilon decay over episodes.
 
 ## Future Plans
 
