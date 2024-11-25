@@ -1,25 +1,27 @@
 import gymnasium as gym
 
-from stable_baselines3 import PPO
+from stable_baselines3 import DQN
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
+import matplotlib.pyplot as plt
 
-class QLearningAgentSB3:
+class DQNAgentSB3:
     def __init__(self, env):
         self.env = env
-        self.model = PPO(policy="MlpPolicy",
+        self.model = DQN(policy="MlpPolicy",
                          env=self.env,
-                         verbose=1,
-                         n_steps=1024,
-                         batch_size=64,
+                         learning_rate=0.0001,
+                         buffer_size=1000000,
+                         learning_starts=100,
+                         batch_size=32,
+                         tau=1.0,
                          gamma=0.99,
-                         gae_lambda=0.95,
-                         ent_coef=0.01,
-                         max_grad_norm=0.5)
-        self.model_name = "PPO-CartPole-v1"
-
+                         train_freq=4,
+                         gradient_steps=1,
+                         verbose=1)
+        self.model_name = "DQN-CartPole-v1"
     def train(self):
-        self.model.learn(total_timesteps=int(1e6))
+        self.model.learn(total_timesteps=int(2e6))
         self.model.save(self.model_name)
 
     def evaluate(self):
@@ -27,11 +29,11 @@ class QLearningAgentSB3:
         mean_reward, std_reward = evaluate_policy(self.model, eval_env, n_eval_episodes=10, deterministic=True)
         print(f"mean_reward={mean_reward:.2f} +/- {std_reward}")
 
+
     def main(self):
         self.train()
-        #self.model = self.model.load(self.model_name)
         self.evaluate()
-        
+
 if __name__ == "__main__":
-    agent = QLearningAgentSB3(gym.make("CartPole-v1"))
+    agent = DQNAgentSB3(gym.make("CartPole-v1"))
     agent.main()
